@@ -1,0 +1,42 @@
+use std::str::FromStr;
+
+use lalrpop_util::ParseError;
+
+use crate::die;
+use die::*;
+
+grammar;
+
+pub Operation: Operation = {
+    LexFate => Operation::Fate,
+    <op:Forged> => op,
+    <op:BloodBowlBlocking> => op,
+}
+
+Forged: Operation = {
+    LexForged <number:NumDice> => Operation::Forged {number},
+    <number:NumDice> "d" LexForged => Operation::Forged {number},
+}
+
+BloodBowlBlocking: Operation = {
+    LexBloodBowlBlocking <number:NumDice> => Operation::BloodBowlBlocking {number},
+    <number:NumDice> "d" LexBloodBowlBlocking => Operation::BloodBowlBlocking {number},
+}
+
+LexFate = {
+    "Fate", "fate"
+}
+
+LexForged = {
+    "Forged", "forged", "fitd", "bitd"
+}
+
+LexBloodBowlBlocking = {
+    "BloodBowlBlocking", "BBB"
+}
+
+NumDice : u8 = {
+    <multiplicity:r"[0-9]+"> =>? u8::from_str(multiplicity).map_err(|_| ParseError::User {
+        error: "number is too big"
+    })
+}

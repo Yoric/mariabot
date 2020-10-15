@@ -1,0 +1,41 @@
+grammar;
+
+pub Operation: Operation = {
+    "sum" "(" <ops:CommaSeparated<Operation>> ")" => Operation::Sum(ops),
+    "max" "(" <ops:CommaSeparated<Operation>> ")" => Operation::Max(ops),
+    <dice:SameDice> => Operation::Roll(dice),
+}
+
+PlusSeparated<T>: Vec<T> = { // (1)
+    <v:(<T> "+")+> <e:T?> => match e { // (2)
+        None => v,
+        Some(e) => {
+            let mut v = v;
+            v.push(e);
+            v
+        }
+    }
+};
+
+CommaSeparated<T>: Vec<T> = { // (1)
+    <v:(<T> ",")*> <e:T?> => match e { // (2)
+        None => v,
+        Some(e) => {
+            let mut v = v;
+            v.push(e);
+            v
+        }
+    }
+};
+
+pub SameDice: SameDice = {
+    "d" <kind:SingleDie> => SameDice { multiplicity: 1, kind },
+    <multiplicity:r"[0-9]+"> "d" <kind:SingleDie> => SameDice { multiplicity: u32::from_str(multiplicity).unwrap(), kind },
+}
+
+SingleDie : SingleDie = {
+    // Fate dice: [-1, 0, 1]
+    "F" => SingleDie::Range { low: -1, high: 2 },
+    // n sided dice, [1, n]
+    <s:r"[0-9]+"> => SingleDie::Range { low: 1, high: i32::from_str(s).unwrap() + 1 }
+}
